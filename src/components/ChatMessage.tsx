@@ -1,13 +1,15 @@
 import { Bot, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import datavoxAvatar from "@/assets/datavox-avatar.png";
 
 interface ChatMessageProps {
   role: "user" | "assistant";
   content: string;
   timestamp?: Date;
+  isTyping?: boolean;
 }
 
-const ChatMessage = ({ role, content, timestamp }: ChatMessageProps) => {
+const ChatMessage = ({ role, content, timestamp, isTyping }: ChatMessageProps) => {
   const isAssistant = role === "assistant";
 
   return (
@@ -19,14 +21,14 @@ const ChatMessage = ({ role, content, timestamp }: ChatMessageProps) => {
     >
       <div
         className={cn(
-          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+          "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden",
           isAssistant
             ? "bg-gradient-to-br from-primary via-secondary to-accent"
             : "bg-muted"
         )}
       >
         {isAssistant ? (
-          <Bot className="h-5 w-5 text-white" />
+          <img src={datavoxAvatar} alt="DataVox" className="w-full h-full object-cover" />
         ) : (
           <User className="h-5 w-5 text-foreground" />
         )}
@@ -35,7 +37,7 @@ const ChatMessage = ({ role, content, timestamp }: ChatMessageProps) => {
       <div className="flex-1 space-y-1">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-sm">
-            {isAssistant ? "Alpha Analytics" : "Você"}
+            {isAssistant ? "DataVox" : "Você"}
           </span>
           {timestamp && (
             <span className="text-xs text-muted-foreground">
@@ -46,9 +48,20 @@ const ChatMessage = ({ role, content, timestamp }: ChatMessageProps) => {
             </span>
           )}
         </div>
-        <div className="text-sm text-foreground whitespace-pre-wrap">
-          {content}
-        </div>
+        {isTyping ? (
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <span className="text-sm">Digitando</span>
+            <span className="flex gap-1">
+              <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+              <span className="w-1 h-1 bg-secondary rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+              <span className="w-1 h-1 bg-accent rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+            </span>
+          </div>
+        ) : (
+          <div className="text-sm text-foreground whitespace-pre-wrap">
+            {content}
+          </div>
+        )}
       </div>
     </div>
   );

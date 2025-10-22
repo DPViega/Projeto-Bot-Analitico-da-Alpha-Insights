@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import ChatMessage from "@/components/ChatMessage";
 import QuickActions from "@/components/QuickActions";
+import SpreadsheetSidebar from "@/components/SpreadsheetSidebar";
 import { toast } from "sonner";
-import alphaLogo from "@/assets/alpha-insights-logo.png";
+import alphaLogo from "@/assets/alpha-insights-logo-new.png";
 
 interface Message {
   role: "user" | "assistant";
@@ -24,7 +25,7 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "E aí! 👋 Sou o Alpha, seu analista de dados favorito da Alpha Insights!\n\nCom mais de 20 anos destrinchando planilhas, Excel e dashboards, eu sou ESPECIALISTA em transformar números em insights que realmente importam. E o melhor: eu faço isso com estilo! 😎\n\n**Como funciona:**\n1. 📊 Carregue suas planilhas (CSV ou Excel) - pode selecionar várias de uma vez!\n2. 🎯 Faça suas perguntas sobre os dados\n3. 💡 Receba análises precisas, insights acionáveis e recomendações certeiras\n\n**Meu diferencial?** Eu analiso TODAS as planilhas que você enviar, cruzo os dados e sempre respondo com 100% de certeza nos números. Nada de achismos por aqui!\n\nBora começar? Selecione suas planilhas de uma vez que eu vou DETONAR essa análise! 🚀",
+      content: "E aí! 👋 Sou o DataVox, seu analista de dados com mais de 20 anos de experiência destrinchando planilhas!\n\nCom meu estilo único e 100% de certeza nas análises, vou transformar seus dados em insights PODEROSOS! 💪\n\n**Como funciona:**\n1. 📊 Carregue suas planilhas (CSV ou Excel) - VÁRIAS de uma vez!\n2. 🎯 Faça suas perguntas sobre os dados\n3. 💡 Receba análises precisas com números EXATOS e recomendações certeiras\n\n**Meu diferencial?** Analiso TODAS as planilhas juntas, cruzo dados e SEMPRE respondo com 100% de certeza. Zero achismo! 🚀\n\nBora começar? Carregue suas planilhas que eu vou ARRASAR nessa análise! 😎",
       timestamp: new Date(),
     }
   ]);
@@ -93,12 +94,17 @@ export default function Chat() {
       const totalFiles = files.length + uploadCount;
       const uploadMessage: Message = {
         role: "assistant",
-        content: `🎯 Show! Carregamos ${uploadCount} arquivo${uploadCount > 1 ? 's' : ''} com sucesso!\n\n${totalFiles > 1 ? `Agora temos ${totalFiles} planilhas no total. Vou conseguir cruzar esses dados e encontrar insights ainda mais poderosos! 💪` : 'Manda suas perguntas que vou arrasar nessa análise!'} 🚀`,
+        content: `🎯 Boa! Carregamos ${uploadCount} arquivo${uploadCount > 1 ? 's' : ''} com SUCESSO!\n\n${files.map(f => `📊 ${f.name}: ${f.rowCount} linhas`).join('\n')}\n\n${totalFiles > 1 ? `Total de ${totalFiles} planilhas prontas! Agora posso cruzar esses dados e entregar insights DEVASTADORES! 💪` : 'Manda suas perguntas que vou DETONAR nessa análise!'} 🚀`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, uploadMessage]);
       toast.success(`${uploadCount} arquivo${uploadCount > 1 ? 's carregados' : ' carregado'}!`);
     }, 500);
+  };
+
+  const handleRemoveFile = (id: string) => {
+    setFiles((prev) => prev.filter(f => f.id !== id));
+    toast.success("Planilha removida!");
   };
 
   const readFileContent = (file: File): Promise<string> => {
@@ -149,9 +155,17 @@ export default function Chat() {
     setInputMessage("");
     setIsLoading(true);
 
+    // Adicionar mensagem de "digitando"
+    setMessages((prev) => [
+      ...prev,
+      { role: "assistant", content: "", timestamp: new Date() }
+    ]);
+
     try {
       await streamChat(text);
     } catch (error: any) {
+      // Remover mensagem de digitando em caso de erro
+      setMessages((prev) => prev.slice(0, -1));
       toast.error(error.message || "Erro ao processar mensagem");
       setIsLoading(false);
     }
@@ -261,73 +275,61 @@ export default function Chat() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b border-border/40 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={alphaLogo} alt="Alpha Insights" className="h-10 w-10" />
+    <div className="min-h-screen bg-background flex">
+      {/* Sidebar de Planilhas */}
+      <SpreadsheetSidebar 
+        spreadsheets={files}
+        onRemove={handleRemoveFile}
+      />
+
+      {/* Área Principal - Chat */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <header className="border-b border-border/40 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+          <div className="px-6 py-4 flex items-center gap-3">
+            <img src={alphaLogo} alt="Alpha Insights" className="h-12 w-12" />
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
                 Alpha Insights
               </h1>
-              <p className="text-xs text-muted-foreground">Bot Analítico de Dados</p>
+              <p className="text-xs text-muted-foreground">DataVox - Seu Analista de Dados</p>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="flex-1 container mx-auto px-4 py-6 flex flex-col max-w-4xl">
-        <div className="flex-1 overflow-y-auto space-y-4 mb-6">
+        {/* Chat */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {messages.map((message, index) => (
             <ChatMessage
               key={index}
               role={message.role}
               content={message.content}
               timestamp={message.timestamp}
+              isTyping={isLoading && message.role === "assistant" && index === messages.length - 1 && !message.content}
             />
           ))}
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="space-y-4 border-t border-border/40 pt-4">
+        {/* Input Area */}
+        <div className="border-t border-border/40 p-6 space-y-4">
           {files.length === 0 && (
-            <div className="text-center mb-4 p-6 border-2 border-dashed border-border/40 rounded-lg bg-muted/20">
+            <div className="text-center p-6 border-2 border-dashed border-border/40 rounded-lg bg-muted/20">
               <Upload className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
               <p className="text-muted-foreground mb-2">
-                📊 Selecione várias planilhas de uma vez para começar a análise
+                📊 Carregue suas planilhas para começar
               </p>
               <p className="text-xs text-muted-foreground">
-                Use Ctrl/Cmd + clique para selecionar múltiplos arquivos! 🚀
+                Selecione múltiplos arquivos (Ctrl/Cmd + clique)! 🚀
               </p>
             </div>
           )}
 
-          {files.length > 0 && messages.length <= 1 && (
+          {files.length > 0 && (
             <QuickActions
               onActionClick={handleSendMessage}
               disabled={isLoading}
             />
-          )}
-
-          {files.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>📊 {files.length} planilha{files.length > 1 ? 's' : ''} carregada{files.length > 1 ? 's' : ''}</span>
-                <span className="text-primary">O Alpha está analisando todas!</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {files.map((file) => (
-                  <div
-                    key={file.id}
-                    className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-sm flex items-center gap-2"
-                  >
-                    <Upload className="h-3 w-3" />
-                    <span className="font-medium">{file.name}</span>
-                    <span className="text-xs text-muted-foreground">({file.rowCount} linhas)</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           )}
 
           <div className="flex gap-2">
@@ -345,7 +347,6 @@ export default function Chat() {
               onClick={() => fileInputRef.current?.click()}
               disabled={isLoading}
               className="flex-shrink-0"
-              title="Selecione múltiplos arquivos de uma vez (Ctrl/Cmd + clique)"
             >
               <Upload className="h-5 w-5" />
             </Button>
@@ -354,15 +355,15 @@ export default function Chat() {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Digite sua pergunta sobre os dados..."
-              disabled={isLoading}
+              placeholder="Digite sua pergunta para o DataVox..."
+              disabled={isLoading || files.length === 0}
               className="min-h-[60px] max-h-[120px] resize-none"
             />
             
             <Button
               onClick={() => handleSendMessage()}
               size="icon"
-              disabled={isLoading || !inputMessage.trim()}
+              disabled={isLoading || !inputMessage.trim() || files.length === 0}
               className="bg-gradient-to-r from-primary via-secondary to-accent hover:opacity-90 transition-opacity h-[60px] w-[60px] flex-shrink-0"
             >
               {isLoading ? (
@@ -374,10 +375,10 @@ export default function Chat() {
           </div>
           
           <p className="text-xs text-center text-muted-foreground">
-            Alpha Insights pode cometer erros. Sempre verifique informações importantes.
+            DataVox pode cometer erros. Sempre verifique informações importantes.
           </p>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
